@@ -27,12 +27,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+
+
 def initialize_task(config, env, init_sim=True):
     from omniisaacgymenvs.tasks.allegro_hand import AllegroHandTask
     from omniisaacgymenvs.tasks.ant import AntLocomotionTask
     from omniisaacgymenvs.tasks.cartpole import CartpoleTask
     from omniisaacgymenvs.tasks.humanoid import HumanoidLocomotionTask
     from omniisaacgymenvs.tasks.shadow_hand import ShadowHandTask
+    from omniisaacgymenvs.tasks.mycobot import MyCobotTask
 
     # Mappings from strings to environments
     task_map = {
@@ -41,6 +44,7 @@ def initialize_task(config, env, init_sim=True):
         "Cartpole": CartpoleTask,
         "Humanoid": HumanoidLocomotionTask,
         "ShadowHand": ShadowHandTask,
+        "MyCobot": MyCobotTask,
     }
 
     from .config_utils.sim_config import SimConfig
