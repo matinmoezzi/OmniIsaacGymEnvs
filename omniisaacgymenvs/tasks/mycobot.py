@@ -18,7 +18,7 @@ class MyCobotTask(RLTask):
 
         self._num_envs = self._task_cfg["env"]["numEnvs"]
         self._env_spacing = self._task_cfg["env"]["envSpacing"]
-        self._mycobot_positions = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        self._mycobot_positions = torch.tensor([0.0, 0.0, 0.0])
 
         self._reset_dist = self._task_cfg["env"]["resetDist"]
         self._max_push_effort = self._task_cfg["env"]["maxEffort"]

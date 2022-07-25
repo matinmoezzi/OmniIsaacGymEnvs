@@ -1,10 +1,9 @@
 from typing import Optional
 import numpy as np
-import torch
+from pathlib import Path
 from omni.isaac.core.robots.robot import Robot
 from omni.isaac.core.utils.stage import add_reference_to_stage
 
-import carb
 
 class MyCobot(Robot):
     def __init__(
@@ -20,7 +19,8 @@ class MyCobot(Robot):
         self._name = name
 
         if self._usd_path is None:
-            self._usd_path = "./usd/mycobot.usd"
+            rel_path = Path(__file__).parent / "../assets/mycobot_with_instance_v2.usd"
+            self._usd_path = str(rel_path)
 
         add_reference_to_stage(self._usd_path, prim_path)
 
