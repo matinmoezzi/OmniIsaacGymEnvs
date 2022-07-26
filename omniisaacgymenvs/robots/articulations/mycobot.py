@@ -18,9 +18,12 @@ class MyCobot(Robot):
         self._usd_path = usd_path
         self._name = name
 
+        from omniisaacgymenvs.utils.usd_utils.create_instanceable_assets import convert_asset_instanceable
+
+        intanceable_asset_usd = Path(__file__).parent / "../assets/mycobot_instanceable.usd"
+
         if self._usd_path is None:
-            rel_path = Path(__file__).parent / "../assets/mycobot_with_instance_v2.usd"
-            self._usd_path = str(rel_path)
+            self._usd_path = str(intanceable_asset_usd)
 
         add_reference_to_stage(self._usd_path, prim_path)
 
