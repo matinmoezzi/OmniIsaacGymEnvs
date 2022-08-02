@@ -20,7 +20,7 @@ class MyCobot(Robot):
 
         from omniisaacgymenvs.utils.usd_utils.create_instanceable_assets import convert_asset_instanceable
 
-        intanceable_asset_usd = Path(__file__).parent / "../assets/mycobot_instanceable.usd"
+        intanceable_asset_usd = Path(__file__).parent / "../assets/mycobot_urdf/mycobot_urdf.usd"
 
         if self._usd_path is None:
             self._usd_path = str(intanceable_asset_usd)

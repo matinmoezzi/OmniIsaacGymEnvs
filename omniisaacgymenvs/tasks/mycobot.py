@@ -1,5 +1,6 @@
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.robots.articulations.mycobot import MyCobot
+from gym import spaces
 
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
@@ -25,7 +26,9 @@ class MyCobotTask(RLTask):
         self._max_episode_length = 500
 
         self._num_observations = 4
-        self._num_actions = 7
+        self._num_actions = 6
+
+        self.action_space = spaces.Box(np.ones(self.num_actions) * -10.0, np.ones(self.num_actions) * 10.0)
 
         # Initializing the camera
         self.sd_helper = None
@@ -71,7 +74,7 @@ class MyCobotTask(RLTask):
         forces = torch.zeros((self._mycobots.count, self._mycobots.num_dof), dtype=torch.float32, device=self._device)
 
         indices = torch.arange(self._mycobots.count, dtype=torch.int32, device=self._device)
-        self._mycobots.set_joint_efforts(forces, indices=indices)
+        self._mycobots.set_joint_positions(actions, indices=indices)
 
     def reset_idx(self, env_ids):
         # bookkeeping
