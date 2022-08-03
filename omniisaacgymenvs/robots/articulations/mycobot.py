@@ -3,6 +3,7 @@ import numpy as np
 from pathlib import Path
 from omni.isaac.core.robots.robot import Robot
 from omni.isaac.core.utils.stage import add_reference_to_stage
+import torch
 
 
 class MyCobot(Robot):
@@ -20,7 +21,8 @@ class MyCobot(Robot):
 
         from omniisaacgymenvs.utils.usd_utils.create_instanceable_assets import convert_asset_instanceable
 
-        intanceable_asset_usd = Path(__file__).parent / "../assets/mycobot_urdf/mycobot_urdf.usd"
+        # intanceable_asset_usd = Path(__file__).parent / "../assets/mycobot_urdf/mycobot_urdf.usd"
+        intanceable_asset_usd = Path(__file__).parent / "../assets/mycobot_original_with_instance.usd"
 
         if self._usd_path is None:
             self._usd_path = str(intanceable_asset_usd)
@@ -32,5 +34,6 @@ class MyCobot(Robot):
             name=name,
             translation=translation,
             orientation=orientation,
+            scale=torch.tensor([0.01, 0.01, 0.01]),
             articulation_controller=None,
         )
