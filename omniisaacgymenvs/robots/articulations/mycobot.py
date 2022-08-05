@@ -22,18 +22,21 @@ class MyCobot(Robot):
         from omniisaacgymenvs.utils.usd_utils.create_instanceable_assets import convert_asset_instanceable
 
         # intanceable_asset_usd = Path(__file__).parent / "../assets/mycobot_urdf/mycobot_urdf.usd"
-        intanceable_asset_usd = Path(__file__).parent / "../assets/mycobot_original_with_instance.usd"
+        intanceable_asset_usd = Path(__file__).parent / "../assets/mycobot_with_instance.usd"
+
 
         if self._usd_path is None:
             self._usd_path = str(intanceable_asset_usd)
 
         add_reference_to_stage(self._usd_path, prim_path)
 
+        SCALING_FACTOR = 0.01
+
         super().__init__(
             prim_path=prim_path,
             name=name,
-            translation=translation,
+            translation=torch.tensor([0.0, 0.0, 14.7]) * SCALING_FACTOR,
             orientation=orientation,
-            scale=torch.tensor([0.01, 0.01, 0.01]),
+            scale=torch.tensor([1, 1, 1]) * SCALING_FACTOR,
             articulation_controller=None,
         )
