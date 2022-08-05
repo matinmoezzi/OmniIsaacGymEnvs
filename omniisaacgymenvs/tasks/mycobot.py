@@ -25,10 +25,15 @@ class MyCobotTask(RLTask):
         self._max_push_effort = self._task_cfg["env"]["maxEffort"]
         self._max_episode_length = 500
 
-        self._num_observations = 4
-        self._num_actions = 6
+        self._num_observations = 1
+        self._num_actions = 8
 
-        self.action_space = spaces.Box(np.ones(self.num_actions) * -10.0, np.ones(self.num_actions) * 10.0)
+        PRISM_BOUND = 1.56
+        REV_BOUND = 10.0 * np.pi/ 180
+        SCALING_FACTOR = 0.01 # same with /articulation/mycobot.py SCALING_FACTOR
+        # [joint1,joint2,joint3,joint4,joint5,joint6,right_hand,left_hand]
+        self.action_space = spaces.Box(np.concatenate((np.ones(6)*-REV_BOUND,np.zeros(2))),
+                                       np.concatenate((np.ones(6)* REV_BOUND,np.ones(2)*PRISM_BOUND*SCALING_FACTOR)))
 
         # Initializing the camera
         self.sd_helper = None
@@ -82,6 +87,14 @@ class MyCobotTask(RLTask):
         self.progress_buf[env_ids] = 0
 
     def post_reset(self):
+        self.joint1_dof_idx = self._mycobots.get_dof_index("joint1_Rev")
+        self.joint2_dof_idx = self._mycobots.get_dof_index("joint2_Rev")
+        self.joint3_dof_idx = self._mycobots.get_dof_index("joint3_Rev")
+        self.joint4_dof_idx = self._mycobots.get_dof_index("joint4_Rev")
+        self.joint5_dof_idx = self._mycobots.get_dof_index("joint5_Rev")
+        self.joint6_dof_idx = self._mycobots.get_dof_index("joint6_Rev")
+        self.joint9_dof_idx = self._mycobots.get_dof_index("joint9_Pris")
+        self.joint10_dof_idx = self._mycobots.get_dof_index("joint10_Pris")
         # randomize all envs
         indices = torch.arange(self._mycobots.count, dtype=torch.int64, device=self._device)
         self.reset_idx(indices)
