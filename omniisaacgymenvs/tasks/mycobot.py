@@ -52,6 +52,7 @@ class MyCobotTask(RLTask):
             "MyCobot", get_prim_at_path(mycobot.prim_path), self._sim_config.parse_actor_config("MyCobot")
         )
         super().set_up_scene(scene)
+        self._set_camera()
         self._mycobots = ArticulationView(prim_paths_expr="/World/envs/.*/MyCobot", name="mycobot_view")
         scene.add(self._mycobots)
         return
@@ -105,7 +106,9 @@ class MyCobotTask(RLTask):
         from omni.isaac.synthetic_utils import SyntheticDataHelper
         from omni.isaac.core.utils.stage import get_current_stage
 
-        camera_path = "/jetbot/chassis/rgb_camera/jetbot_camera"
+        # if set env_# to .*, "Accessed schema on invalid prim" will pop up.
+        # Adding the camera under camera_flange group after converting
+        camera_path = "/World/envs/env_0/MyCobot/camera_flange/Camera"
         camera = UsdGeom.Camera(get_current_stage().GetPrimAtPath(camera_path))
         camera.GetClippingRangeAttr().Set((0.01, 10000))
         if not self._env._render:
@@ -113,7 +116,7 @@ class MyCobotTask(RLTask):
             viewport_handle.get_viewport_window().set_active_camera(str(camera_path))
             viewport_window = viewport_handle.get_viewport_window()
             self.viewport_window = viewport_window
-            viewport_window.set_texture_resolution(128, 128)
+            viewport_window.set_texture_resolution(64, 64)
         else:
             viewport_handle = omni.kit.viewport_legacy.get_viewport_interface().create_instance()
             new_viewport_name = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window_name(
@@ -121,7 +124,7 @@ class MyCobotTask(RLTask):
             )
             viewport_window = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window(viewport_handle)
             viewport_window.set_active_camera(camera_path)
-            viewport_window.set_texture_resolution(128, 128)
+            viewport_window.set_texture_resolution(64, 64)
             viewport_window.set_window_pos(1000, 400)
             viewport_window.set_window_size(420, 420)
             self.viewport_window = viewport_window

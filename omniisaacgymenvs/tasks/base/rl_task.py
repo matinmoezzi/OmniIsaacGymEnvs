@@ -121,7 +121,7 @@ class RLTask(BaseTask):
         self._env_pos = torch.tensor(np.array(self._env_pos), device=self._device, dtype=torch.float)
         self._cloner.filter_collisions(
             self._env._world.get_physics_context().prim_path, "/World/collisions", prim_paths, collision_filter_global_paths)
-        self.set_initial_camera_params(camera_position=[10, 10, 3], camera_target=[0, 0, 0])
+        # self.set_initial_camera_params(camera_position=[10, 10, 3], camera_target=[0, 0, 0])
         if self._sim_config.task_config["sim"].get("add_distant_light", True):
             create_distant_light()
     
