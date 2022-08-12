@@ -59,12 +59,16 @@ class MyCobotTask(RLTask):
 
     def get_observations(self) -> dict:
 
-        # self._env._world.render()
-        # # wait_for_sensor_data is recommended when capturing multiple sensors, in this case we can set it to zero as we only need RGB
-        # gt = self.sd_helper.get_groundtruth(
-        #     ["rgb"], self.viewport_window, verify_sensor_init=False, wait_for_sensor_data=0
-        # )
-        # self.obs_buf = gt["rgb"][:, :, :3]
+        self._env._world.render()
+        camera_matrix = []
+        # wait_for_sensor_data is recommended when capturing multiple sensors, in this case we can set it to zero as we only need RGB
+        for i in range(self._num_envs):
+            gt = self.sd_helper.get_groundtruth(
+                ["rgb"], self.viewport_window[i], verify_sensor_init=False, wait_for_sensor_data=0
+            )["rgb"][:, :, :3]
+            camera_matrix.append(gt)
+        dof_pos = self._mycobots.get_joint_positions()
+        dof_vol = self._mycobots.get_joint_velocities()
 
         # observations = {self._mycobots.name: {"obs_buf": self.obs_buf}}
         observations = {self._mycobots.name: {"obs_buf": []}}
@@ -117,13 +121,15 @@ class MyCobotTask(RLTask):
             camera = UsdGeom.Camera(get_current_stage().GetPrimAtPath(camera_path))
             camera.GetClippingRangeAttr().Set((0.01, 10000))
 
-        if not self._env._render:
-            pass
-            # viewport_handle = omni.kit.viewport_legacy.get_viewport_interface()
-            # viewport_handle.get_viewport_window().set_active_camera(str(camera_path))
-            # viewport_window = viewport_handle.get_viewport_window()
-            # self.viewport_window = viewport_window
-            # viewport_window.set_texture_resolution(64, 64)
+        FLAG = True # Whether initialize the viewport for each camera.
+        if not FLAG:
+            viewport_handle = omni.kit.viewport_legacy.get_viewport_interface()
+            for i in range(self._num_envs):
+                viewport_handle.get_viewport_window().set_active_camera(str(camera_path_set[i]))
+                viewport_window = viewport_handle.get_viewport_window()
+                viewport_window.set_texture_resolution(64, 64)
+                self.viewport_window.append(viewport_window)
+
         else:           
             for i in range(self._num_envs):
                 viewport_handle = omni.kit.viewport_legacy.get_viewport_interface().create_instance()
@@ -137,6 +143,7 @@ class MyCobotTask(RLTask):
                 viewport_window.set_window_pos(1000, 400)
                 viewport_window.set_window_size(420, 420)
                 self.viewport_window.append(viewport_window)
+
         self.sd_helper = SyntheticDataHelper()
         for i in range(self._num_envs):
             self.sd_helper.initialize(sensor_names=["rgb"], viewport=self.viewport_window[i])
