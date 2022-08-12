@@ -108,30 +108,41 @@ class MyCobotTask(RLTask):
 
         # if set env_# to .*, "Accessed schema on invalid prim" will pop up.
         # Adding the camera under camera_flange group after converting
-        camera_path = "/World/envs/env_0/MyCobot/camera_flange/Camera"
-        camera = UsdGeom.Camera(get_current_stage().GetPrimAtPath(camera_path))
-        camera.GetClippingRangeAttr().Set((0.01, 10000))
+        camera_path_default = "/World/envs/env_{}/MyCobot/camera_flange/Camera"
+        camera_path_set = []
+        self.viewport_window = []
+        for i in range(self._num_envs):
+            camera_path = camera_path_default.format(i)
+            camera_path_set.append(camera_path)
+            camera = UsdGeom.Camera(get_current_stage().GetPrimAtPath(camera_path))
+            camera.GetClippingRangeAttr().Set((0.01, 10000))
+
         if not self._env._render:
-            viewport_handle = omni.kit.viewport_legacy.get_viewport_interface()
-            viewport_handle.get_viewport_window().set_active_camera(str(camera_path))
-            viewport_window = viewport_handle.get_viewport_window()
-            self.viewport_window = viewport_window
-            viewport_window.set_texture_resolution(64, 64)
-        else:
-            viewport_handle = omni.kit.viewport_legacy.get_viewport_interface().create_instance()
-            new_viewport_name = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window_name(
+            pass
+            # viewport_handle = omni.kit.viewport_legacy.get_viewport_interface()
+            # viewport_handle.get_viewport_window().set_active_camera(str(camera_path))
+            # viewport_window = viewport_handle.get_viewport_window()
+            # self.viewport_window = viewport_window
+            # viewport_window.set_texture_resolution(64, 64)
+        else:           
+            for i in range(self._num_envs):
+                viewport_handle = omni.kit.viewport_legacy.get_viewport_interface().create_instance()
+                # Upper line of code linked with how many viewpoint_window get created.
+                new_viewport_name = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window_name(
                 viewport_handle
-            )
-            viewport_window = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window(viewport_handle)
-            viewport_window.set_active_camera(camera_path)
-            viewport_window.set_texture_resolution(64, 64)
-            viewport_window.set_window_pos(1000, 400)
-            viewport_window.set_window_size(420, 420)
-            self.viewport_window = viewport_window
+                )
+                viewport_window = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window(viewport_handle)
+                viewport_window.set_active_camera(camera_path_set[i])
+                viewport_window.set_texture_resolution(64, 64)
+                viewport_window.set_window_pos(1000, 400)
+                viewport_window.set_window_size(420, 420)
+                self.viewport_window.append(viewport_window)
         self.sd_helper = SyntheticDataHelper()
-        self.sd_helper.initialize(sensor_names=["rgb"], viewport=self.viewport_window)
+        for i in range(self._num_envs):
+            self.sd_helper.initialize(sensor_names=["rgb"], viewport=self.viewport_window[i])
         self._env._world.render()
-        self.sd_helper.get_groundtruth(["rgb"], self.viewport_window)
+        for i in range(self._num_envs):
+            self.sd_helper.get_groundtruth(["rgb"], self.viewport_window[i])
         return
 
     def calculate_metrics(self) -> None:
