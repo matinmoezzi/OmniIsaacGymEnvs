@@ -48,13 +48,27 @@ class MyCobotTask(RLTask):
             prim_path=self.default_zero_env_path + "/MyCobot", name="MyCobot", translation=self._mycobot_positions
         )
         # applies articulation settings from the task configuration yaml file
+        from omni.isaac.core.prims import RigidPrimView
+        from omni.isaac.core.objects import DynamicCuboid
+        scene.add(
+            DynamicCuboid(
+                prim_path="/World/envs/env_0/cube",
+                name="visual_cube",
+                position=np.array([0.00, -0.20, 0.025]),
+                size=np.array([0.02, 0.02, 0.02]),
+                color=np.array([1.0, 0, 0]),
+            )
+        )
         self._sim_config.apply_articulation_settings(
             "MyCobot", get_prim_at_path(mycobot.prim_path), self._sim_config.parse_actor_config("MyCobot")
         )
         super().set_up_scene(scene)
+
         self._set_camera()
         self._mycobots = ArticulationView(prim_paths_expr="/World/envs/.*/MyCobot", name="mycobot_view")
         scene.add(self._mycobots)
+        self._objects = RigidPrimView(prim_paths_expr="/World/envs/env_.*/cube", name="cube_view")
+        scene.add(self._objects)
         return
 
     def get_observations(self) -> dict:
