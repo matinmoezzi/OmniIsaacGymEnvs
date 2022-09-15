@@ -6,6 +6,7 @@ from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
 
 import numpy as np
+from omni.kit import viewport_widgets_manager
 import torch
 import math
 
@@ -29,11 +30,13 @@ class MyCobotTask(RLTask):
         self._num_actions = 8
 
         PRISM_BOUND = 1.56
-        REV_BOUND = 10.0 * np.pi/ 180
-        SCALING_FACTOR = 0.01 # same with /articulation/mycobot.py SCALING_FACTOR
+        REV_BOUND = 10.0 * np.pi / 180
+        SCALING_FACTOR = 0.01  # same with /articulation/mycobot.py SCALING_FACTOR
         # [joint1,joint2,joint3,joint4,joint5,joint6,right_hand,left_hand]
-        self.action_space = spaces.Box(np.concatenate((np.ones(6)*-REV_BOUND,np.zeros(2))),
-                                       np.concatenate((np.ones(6)* REV_BOUND,np.ones(2)*PRISM_BOUND*SCALING_FACTOR)))
+        self.action_space = spaces.Box(
+            np.concatenate((np.ones(6) * -REV_BOUND, np.zeros(2))),
+            np.concatenate((np.ones(6) * REV_BOUND, np.ones(2) * PRISM_BOUND * SCALING_FACTOR)),
+        )
 
         # Initializing the camera
         self.sd_helper = None
@@ -50,12 +53,13 @@ class MyCobotTask(RLTask):
         # applies articulation settings from the task configuration yaml file
         from omni.isaac.core.prims import RigidPrimView
         from omni.isaac.core.objects import DynamicCuboid
+
         scene.add(
             DynamicCuboid(
                 prim_path="/World/envs/env_0/cube",
                 name="visual_cube",
                 position=np.array([0.00, -0.20, 0.025]),
-                size=np.array([0.02, 0.02, 0.02]),
+                size=np.array([0.1, 0.1, 0.1]),
                 color=np.array([1.0, 0, 0]),
             )
         )
@@ -64,6 +68,7 @@ class MyCobotTask(RLTask):
         )
         super().set_up_scene(scene)
 
+        # self._set_camera()
         self._set_camera()
         self._mycobots = ArticulationView(prim_paths_expr="/World/envs/.*/MyCobot", name="mycobot_view")
         scene.add(self._mycobots)
@@ -84,8 +89,7 @@ class MyCobotTask(RLTask):
         dof_pos = self._mycobots.get_joint_positions()
         dof_vol = self._mycobots.get_joint_velocities()
 
-        # observations = {self._mycobots.name: {"obs_buf": self.obs_buf}}
-        observations = {self._mycobots.name: {"obs_buf": []}}
+        observations = {self._mycobots.name: {"obs_buf": camera_matrix}}
         return observations
 
     def pre_physics_step(self, actions) -> None:
@@ -135,7 +139,7 @@ class MyCobotTask(RLTask):
             camera = UsdGeom.Camera(get_current_stage().GetPrimAtPath(camera_path))
             camera.GetClippingRangeAttr().Set((0.01, 10000))
 
-        FLAG = True # Whether initialize the viewport for each camera.
+        FLAG = True  # Whether initialize the viewport for each camera.
         if not FLAG:
             viewport_handle = omni.kit.viewport_legacy.get_viewport_interface()
             for i in range(self._num_envs):
@@ -144,18 +148,19 @@ class MyCobotTask(RLTask):
                 viewport_window.set_texture_resolution(64, 64)
                 self.viewport_window.append(viewport_window)
 
-        else:           
+        else:
             for i in range(self._num_envs):
                 viewport_handle = omni.kit.viewport_legacy.get_viewport_interface().create_instance()
                 # Upper line of code linked with how many viewpoint_window get created.
                 new_viewport_name = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window_name(
-                viewport_handle
+                    viewport_handle
                 )
                 viewport_window = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window(viewport_handle)
                 viewport_window.set_active_camera(camera_path_set[i])
-                viewport_window.set_texture_resolution(64, 64)
+                viewport_window.set_texture_resolution(128, 128)
                 viewport_window.set_window_pos(1000, 400)
                 viewport_window.set_window_size(420, 420)
+                # viewport_window.show_hide_window(False)
                 self.viewport_window.append(viewport_window)
 
         self.sd_helper = SyntheticDataHelper()
