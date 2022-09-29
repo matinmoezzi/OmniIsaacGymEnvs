@@ -67,7 +67,7 @@ class MyCobotTask(RLTask):
                 prim_path="/World/envs/env_0/cube",
                 name="visual_cube",
                 position=np.array([0.00, -0.20, 0.025]),
-                size=np.array([0.03, 0.03, 0.03]),
+                size=0.03,
                 color=np.array([1.0, 0, 0]),
             )
         )
