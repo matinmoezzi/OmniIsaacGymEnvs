@@ -73,3 +73,6 @@ sim:
     # per-shape
     contact_offset: 0.02
     rest_offset: 0.001
+    scaling_factor: 0.01
+    prismatic_joint_limit: 1.56
+    revolute_joint_limit: 10

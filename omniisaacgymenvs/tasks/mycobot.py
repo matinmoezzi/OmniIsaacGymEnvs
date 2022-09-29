@@ -20,7 +20,10 @@ class MyCobotTask(RLTask):
 
         self._num_envs = self._task_cfg["env"]["numEnvs"]
         self._env_spacing = self._task_cfg["env"]["envSpacing"]
-        self._mycobot_positions = torch.tensor([0.0, 0.0, 0.0])
+        self._mycobot_positions = torch.tensor([0.0, 0.0, 0.2])
+        self.scaling_factor = self._task_cfg["sim"]["MyCobot"]["scaling_factor"]
+        self.prismatic_joint_limit = self._task_cfg["sim"]["MyCobot"]["prismatic_joint_limit"]
+        self.revolute_joint_limit = self._task_cfg["sim"]["MyCobot"]["revolute_joint_limit"]
 
         self._reset_dist = self._task_cfg["env"]["resetDist"]
         self._max_push_effort = self._task_cfg["env"]["maxEffort"]
@@ -29,13 +32,15 @@ class MyCobotTask(RLTask):
         self._num_observations = 1
         self._num_actions = 8
 
-        PRISM_BOUND = 1.56
-        REV_BOUND = 10.0 * np.pi / 180
-        SCALING_FACTOR = 0.01  # same with /articulation/mycobot.py SCALING_FACTOR
         # [joint1,joint2,joint3,joint4,joint5,joint6,right_hand,left_hand]
         self.action_space = spaces.Box(
-            np.concatenate((np.ones(6) * -REV_BOUND, np.zeros(2))),
-            np.concatenate((np.ones(6) * REV_BOUND, np.ones(2) * PRISM_BOUND * SCALING_FACTOR)),
+            np.concatenate((np.ones(6) * -np.radians(self.revolute_joint_limit), np.zeros(2))),
+            np.concatenate(
+                (
+                    np.ones(6) * np.radians(self.revolute_joint_limit),
+                    np.ones(2) * self.prismatic_joint_limit * self.scaling_factor,
+                )
+            ),
         )
 
         # Initializing the camera
@@ -48,7 +53,10 @@ class MyCobotTask(RLTask):
 
     def set_up_scene(self, scene) -> None:
         mycobot = MyCobot(
-            prim_path=self.default_zero_env_path + "/MyCobot", name="MyCobot", translation=self._mycobot_positions
+            prim_path=self.default_zero_env_path + "/MyCobot",
+            name="MyCobot",
+            translation=self._mycobot_positions,
+            scaling_factor=self.scaling_factor,
         )
         # applies articulation settings from the task configuration yaml file
         from omni.isaac.core.prims import RigidPrimView
@@ -59,7 +67,7 @@ class MyCobotTask(RLTask):
                 prim_path="/World/envs/env_0/cube",
                 name="visual_cube",
                 position=np.array([0.00, -0.20, 0.025]),
-                size=np.array([0.1, 0.1, 0.1]),
+                size=np.array([0.03, 0.03, 0.03]),
                 color=np.array([1.0, 0, 0]),
             )
         )
