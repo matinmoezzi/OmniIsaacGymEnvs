@@ -80,7 +80,7 @@ class MyCobotEnv(gym.Env):
 
         self.action_space = spaces.Box(low=-1, high=1.0, shape=(6,), dtype=np.float32)
         # Vision Based observation_space, which need to match the method get_observation return
-        self.observation_space = spaces.Box(low=int(0), high=int(255), shape=(64, 64, 3), dtype=np.intc)
+        self.observation_space = spaces.Box(low=0, high=255, shape=(64, 64, 3), dtype=np.uint8)
 
         self.max_velocity = 1
         self.max_angular_velocity = math.pi
@@ -124,8 +124,8 @@ class MyCobotEnv(gym.Env):
 
     def get_observations(self):
         self._my_world.render()
-        mycobot_angular_velocity = self.mycobot.get_angular_velocity()
-        mycobot_angle_postion = self.mycobot.get_world_pose()
+        # mycobot_angular_velocity = self.mycobot.get_angular_velocity()
+        # mycobot_angle_postion = self.mycobot.get_world_pose()
 
         gt = self.sd_helper.get_groundtruth(
             ["rgb"], self.viewport_window, verify_sensor_init=False, wait_for_sensor_data=0
@@ -160,6 +160,6 @@ class MyCobotEnv(gym.Env):
         self.viewport_window = viewport_window
         self.sd_helper = SyntheticDataHelper()
         self.sd_helper.initialize(sensor_names=["rgb"], viewport=self.viewport_window)
-        # self.my_world.render()
+        self._my_world.render()
         self.sd_helper.get_groundtruth(["rgb"], self.viewport_window)
         return
