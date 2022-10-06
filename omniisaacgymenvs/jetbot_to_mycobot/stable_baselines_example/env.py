@@ -1,14 +1,7 @@
-# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
-#
-# NVIDIA CORPORATION and its licensors retain all intellectual property
-# and proprietary rights in and to this software, related documentation
-# and any modifications thereto.  Any use, reproduction, disclosure or
-# distribution of this software and related documentation without an express
-# license agreement from NVIDIA CORPORATION is strictly prohibited.
-#
 from symbol import parameters
 import gym
 from gym import spaces
+
 import numpy as np
 import os
 import math
@@ -25,7 +18,7 @@ class MyCobotEnv(gym.Env):
         skip_frame=1,
         physics_dt=1.0 / 60.0,
         rendering_dt=1.0 / 60.0,
-        max_episode_length=1024, # 256
+        max_episode_length=1024,  # 256
         seed=0,
         headless=True,
     ) -> None:
@@ -42,14 +35,14 @@ class MyCobotEnv(gym.Env):
 
         self._my_world = World(physics_dt=physics_dt, rendering_dt=rendering_dt, stage_units_in_meters=1.0)
 
-        
-        usd_file_name = 'mycobot_gripper_simplified_hands_deleted.usd'
-        mycobot_asset_path = os.path.join(pathlib.Path(__file__).parent.resolve(),usd_file_name)
+        usd_file_name = "mycobot_gripper_simplified_hands_deleted.usd"
+        mycobot_asset_path = os.path.join(pathlib.Path(__file__).parent.resolve(), usd_file_name)
 
-        from omni.isaac.core.robots.robot import Robot
-        from omni.isaac.core.utils.stage import add_reference_to_stage
-        add_reference_to_stage(usd_path=mycobot_asset_path, prim_path='/mycobot')
-        mycobot = Robot(prim_path='/mycobot', name='MyCobot',scale=torch.tensor([1, 1, 1])*0.05)
+        from mycobot import MyCobot
+
+        self.mycobot = self._my_world.scene.add(
+            MyCobot(prim_path="/mycobot", usd_path=mycobot_asset_path, name="MyCobot", scaling_factor=0.05)
+        )
 
         self.goal = self._my_world.scene.add(
             VisualCuboid(
@@ -61,13 +54,13 @@ class MyCobotEnv(gym.Env):
             )
         )
 
-        from omni.isaac.core.articulations import ArticulationView
-        # from omni.isaac.core.prims import GeometryPrim
-        self._mycobot = ArticulationView(prim_paths_expr="/mycobot",name='mycobot_view')
-        self._tip = ArticulationView(prim_paths_expr="/mycobot/gripper_shell/collisions")
+        from omni.isaac.core.prims.xform_prim import XFormPrim
+
+        self._tip = XFormPrim(prim_path="/mycobot/gripper_shell/collisions", name="gripper_collisions")
 
         from omni.isaac.core.utils.stage import get_current_stage
         from pxr import UsdLux
+
         stage = get_current_stage()
         light = UsdLux.DomeLight.Define(stage, "/World/defaultDomeLight")
         light.GetPrim().GetAttribute("intensity").Set(500)
@@ -81,7 +74,7 @@ class MyCobotEnv(gym.Env):
 
         self.action_space = spaces.Box(low=-1, high=1.0, shape=(6,), dtype=np.float32)
         # Vision Based observation_space, which need to match the method get_observation return
-        self.observation_space = spaces.Box(low=int(0), high=int(255), shape=(64,64,3), dtype=np.intc)
+        self.observation_space = spaces.Box(low=int(0), high=int(255), shape=(64, 64, 3), dtype=np.intc)
 
         self.max_velocity = 1
         self.max_angular_velocity = math.pi
@@ -91,30 +84,12 @@ class MyCobotEnv(gym.Env):
     def get_dt(self):
         return self._dt
 
-    def step(self, action): # action is produced by policy (embeded)
+    def step(self, action):  # action is produced by policy (embeded)
         previous_mycobot_tip_position, _ = self._tip.get_world_pose()
-        # # previous_jetbot_position, _ = self.jetbot.get_world_pose()
-        # # action forward velocity , angular velocity on [-1, 1]
-        # raw_forward = action[0]
-        # raw_angular = action[1]
-
-        # # we want to force the jetbot to always drive forward
-        # # so we transform to [0,1].  we also scale by our max velocity
-        # forward = (raw_forward + 1.0) / 2.0
-        # forward_velocity = forward * self.max_velocity
-
-        # # we scale the angular, but leave it on [-1,1] so the
-        # # jetbot can remain an ambiturner.
-        # angular_velocity = raw_angular * self.max_angular_velocity
-
-        # # we apply our actions to the jetbot
-        # for i in range(self._skip_frame):
-        #     self.jetbot.apply_wheel_actions(
-        #         self.jetbot_controller.forward(command=[forward_velocity, angular_velocity])
-        #     )
-        #     self._my_world.step(render=False)
         for i in range(self._skip_frame):
-            self._mycobot.set_joint_positions(positions=torch.tensor())
+            from omni.isaac.core.utils.types import ArticulationAction
+
+            self.mycobot.apply_action(ArticulationAction(action))
             self._my_world.step(render=False)
 
         observations = self.get_observations()
@@ -143,8 +118,8 @@ class MyCobotEnv(gym.Env):
 
     def get_observations(self):
         self._my_world.render()
-        mycobot_angular_velocity = self._mycobot.get_angular_velocities()
-        mycobot_angle_postion = self._mycobot.get_world_poses()
+        mycobot_angular_velocity = self.mycobot.get_angular_velocity()
+        mycobot_angle_postion = self.mycobot.get_world_pose()
 
         gt = self.sd_helper.get_groundtruth(
             ["rgb"], self.viewport_window, verify_sensor_init=False, wait_for_sensor_data=0
@@ -168,9 +143,7 @@ class MyCobotEnv(gym.Env):
         from omni.isaac.synthetic_utils import SyntheticDataHelper
 
         viewport_handle = omni.kit.viewport_legacy.get_viewport_interface().create_instance()
-        new_viewport_name = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window_name(
-            viewport_handle
-        )
+        new_viewport_name = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window_name(viewport_handle)
         viewport_window = omni.kit.viewport_legacy.get_viewport_interface().get_viewport_window(viewport_handle)
         viewport_window.set_active_camera("/mycobot/camera_flange/rgb_camera")
         viewport_window.set_texture_resolution(64, 64)
@@ -183,16 +156,4 @@ class MyCobotEnv(gym.Env):
         self.sd_helper.initialize(sensor_names=["rgb"], viewport=self.viewport_window)
         # self.my_world.render()
         self.sd_helper.get_groundtruth(["rgb"], self.viewport_window)
-        return
-
-    def get_joint_velociies(self):
-        full_dofs_velocities = self._mycobot.get_joint_velocities()
-        joint_dof_velocities = [full_dofs_velocities[i] for i in self._mycobot_dof_indicies]
-        return joint_dof_velocities
-
-    def set_joint_velocity(self, velocities) -> None:
-        full_dofs_velocities = [None] * self.num_dof
-        for i in range(self.num_dof):
-            full_dofs_velocities[self.num_dof[i]] = velocities[i]
-        self._mycobot.set_joint_velocities(velocities=np.array(full_dofs_velocities))
         return

@@ -24,16 +24,15 @@ my_env = MyCobotEnv(headless=False)
 
 
 policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[dict(vf=[128, 128, 128], pi=[128, 128, 128])])
-policy = MlpPolicy
 # policy = CnnPolicy # default to cnn in sim version 2022.1.0
 total_timesteps = 500000
 
 if args.test is True:
     total_timesteps = 10000
 
-checkpoint_callback = CheckpointCallback(save_freq=10000, save_path=log_dir, name_prefix="jetbot_policy_checkpoint")
+checkpoint_callback = CheckpointCallback(save_freq=10000, save_path=log_dir, name_prefix="mycobot_policy_checkpoint")
 model = PPO(
-    policy,
+    CnnPolicy,
     my_env,
     policy_kwargs=policy_kwargs,
     verbose=1,
@@ -52,6 +51,6 @@ model = PPO(
 )
 model.learn(total_timesteps=total_timesteps, callback=[checkpoint_callback])
 
-model.save(log_dir + "/jetbot_policy")
+model.save(log_dir + "/mycobot_policy")
 
 my_env.close()
