@@ -34,6 +34,7 @@ class MyCobotEnv(gym.Env):
         from omni.isaac.core.objects import VisualCuboid
 
         self._my_world = World(physics_dt=physics_dt, rendering_dt=rendering_dt, stage_units_in_meters=1.0)
+        self._my_world.scene.add_default_ground_plane()
 
         usd_file_name = "mycobot_gripper_simplified_hands_deleted.usd"
         mycobot_asset_path = os.path.join(pathlib.Path(__file__).parent.resolve(), usd_file_name)
@@ -41,7 +42,12 @@ class MyCobotEnv(gym.Env):
         from mycobot import MyCobot
 
         self.mycobot = self._my_world.scene.add(
-            MyCobot(prim_path="/mycobot", usd_path=mycobot_asset_path, name="MyCobot", scaling_factor=0.05)
+            MyCobot(
+                prim_path="/mycobot",
+                usd_path=mycobot_asset_path,
+                name="MyCobot", 
+                translation=torch.tensor([0.0, 0.0, 14.7]),
+                scaling_factor=0.05)
         )
 
         self.goal = self._my_world.scene.add(
