@@ -14,6 +14,7 @@ class MyCobot(Robot):
         usd_path: Optional[str] = None,
         translation: Optional[np.ndarray] = torch.tensor([.0, .0, .0]),
         orientation: Optional[np.ndarray] = None,
+        scale: Optional[np.ndarray] = torch.tensor([1.0, 1.0, 1.0]),
         scaling_factor: Optional[float] = 1.0,
     ) -> None:
 
@@ -31,6 +32,6 @@ class MyCobot(Robot):
             name=name,
             translation=translation * scaling_factor,
             orientation=orientation,
-            scale= torch.tensor([1, 1, 1]) * scaling_factor,
+            scale=scale * scaling_factor,
             articulation_controller=None,
         )
